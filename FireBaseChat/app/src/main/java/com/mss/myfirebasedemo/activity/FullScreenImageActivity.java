@@ -47,6 +47,7 @@ public class FullScreenImageActivity extends AppCompatActivity {
 
     private void initUi() {
         progressDialog = new ProgressDialog(this);
+        progressDialog.setCanceledOnTouchOutside(false);
         mImageView = (ImageView) findViewById(R.id.img_pic);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setValues();

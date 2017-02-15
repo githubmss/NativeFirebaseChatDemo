@@ -1,13 +1,18 @@
 package com.mss.myfirebasedemo.activity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -30,13 +35,17 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView rvUserList;
     UserListAdapter adapter;
     DatabaseReference database;
-    private AppPreferences mSession;
+    @Bind(R.id.fab)
+    FloatingActionButton fab;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        database = FirebaseDatabase.getInstance().getReference();
+        rvUserList.setLayoutManager(new LinearLayoutManager(MainActivity.this));
         initUi();
     }
 
@@ -47,27 +56,43 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initUi() {
-        mSession = new AppPreferences(MainActivity.this);
+        progressDialog = new ProgressDialog(this);
         getSupportActionBar().setTitle("Home");
-        database = FirebaseDatabase.getInstance().getReference();
-        rvUserList.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+        progressDialog.setMessage("Getting Users...");
+        progressDialog.show();
+        progressDialog.setCancelable(false);
         database.child("users").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 ArrayList<UserModel> userModelsList = new ArrayList<UserModel>();
+
                 for (DataSnapshot noteDataSnapshot : dataSnapshot.getChildren()) {
                     UserModel user = noteDataSnapshot.getValue(UserModel.class);
                     if (!user.getUid().equals(mAuth.getCurrentUser().getUid())) {
                         userModelsList.add(user);
                     }
                 }
-                adapter = new UserListAdapter(MainActivity.this, userModelsList);
-                rvUserList.setAdapter(adapter);
+                if (userModelsList.size() > 0) {
+                    adapter = new UserListAdapter(MainActivity.this, userModelsList);
+                    rvUserList.setAdapter(adapter);
+                    progressDialog.dismiss();
+                } else {
+                    progressDialog.dismiss();
+                }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
 
+            }
+        });
+
+
+
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, UpdateProfileActivity.class));
             }
         });
     }
@@ -83,8 +108,6 @@ public class MainActivity extends AppCompatActivity {
             finish();
         } else if (itemId == R.id.changepass) {
             startActivity(new Intent(MainActivity.this, ChangePasswordActivity.class));
-        } else if (itemId == R.id.update) {
-            startActivity(new Intent(MainActivity.this, UpdateProfileActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }

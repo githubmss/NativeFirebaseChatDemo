@@ -1,6 +1,7 @@
 package com.mss.myfirebasedemo.activity;
 
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -66,6 +67,7 @@ public class UpdateProfileActivity extends AppCompatActivity {
 
     boolean imgCheck = false;
 
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -77,8 +79,13 @@ public class UpdateProfileActivity extends AppCompatActivity {
 
     private void initUi() {
         viewGroup = (ViewGroup) ((ViewGroup) this.findViewById(android.R.id.content)).getChildAt(0);
+        progressDialog = new ProgressDialog(this);
         database = FirebaseDatabase.getInstance().getReference();
         getSupportActionBar().setTitle("Update Profile");
+        progressDialog.setMessage("getting profile...");
+        progressDialog.show();
+        progressDialog.setCanceledOnTouchOutside(false);
+
         database.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
@@ -86,6 +93,7 @@ public class UpdateProfileActivity extends AppCompatActivity {
                     database.child("users").child(mAuth.getCurrentUser().getUid()).child("profile").addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot snapshot) {
+                            progressDialog.dismiss();
                             ProfileModel profile = snapshot.getValue(ProfileModel.class);
                             editName.setText(profile.getName());
                             editDesc.setText(profile.getDesc());
@@ -105,10 +113,13 @@ public class UpdateProfileActivity extends AppCompatActivity {
 
                         @Override
                         public void onCancelled(DatabaseError databaseError) {
+                            progressDialog.dismiss();
                         }
                     });
                 } else {
+                    progressDialog.dismiss();
                     Log.d("no", "not exists");
+                    txtEmail.setText(mAuth.getCurrentUser().getEmail());
                     editName.setText("");
                     editDesc.setText("");
                 }
@@ -116,6 +127,7 @@ public class UpdateProfileActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+                progressDialog.dismiss();
             }
         });
 

@@ -1,5 +1,6 @@
 package com.mss.myfirebasedemo.activity;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -32,6 +33,7 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     @Bind(R.id.btn_submit)
     Button btnSubmit;
     private ViewGroup viewGroup;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -42,6 +44,8 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     }
 
     private void initUi() {
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setCanceledOnTouchOutside(false);
         viewGroup = (ViewGroup) ((ViewGroup) this.findViewById(android.R.id.content)).getChildAt(0);
         getSupportActionBar().setTitle("Forgot Password");
     }
@@ -61,15 +65,19 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     @OnClick(R.id.btn_submit)
     public void onClick() {
         if (validations()) {
+            progressDialog.setMessage("Loading...");
+            progressDialog.show();
             mAuth.sendPasswordResetEmail(editEmail.getText().toString())
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
+                                progressDialog.dismiss();
                                 Toast.makeText(getApplicationContext(), "Email sent.", Toast.LENGTH_SHORT).show();
                                 Log.d("forgot", "Email sent.");
                                 finish();
                             } else {
+                                progressDialog.dismiss();
                                 Toast.makeText(getApplicationContext(), "Email not exists.", Toast.LENGTH_SHORT).show();
                             }
                         }

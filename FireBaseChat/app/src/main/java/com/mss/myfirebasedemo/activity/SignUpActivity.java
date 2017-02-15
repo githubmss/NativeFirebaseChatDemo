@@ -1,5 +1,6 @@
 package com.mss.myfirebasedemo.activity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -47,7 +48,7 @@ public class SignUpActivity extends AppCompatActivity {
     LinearLayout activityMain;
     private ViewGroup viewGroup;
     private FirebaseAuth.AuthStateListener mAuthListener;
-
+    private ProgressDialog progressDialog;
     UserModel user;
     private DatabaseReference database;
 
@@ -60,6 +61,7 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     private void initUi() {
+        progressDialog = new ProgressDialog(this);
         database = FirebaseDatabase.getInstance().getReference();
         viewGroup = (ViewGroup) ((ViewGroup) this.findViewById(android.R.id.content)).getChildAt(0);
         mAuthListener = new FirebaseAuth.AuthStateListener() {
@@ -68,7 +70,6 @@ public class SignUpActivity extends AppCompatActivity {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     Log.d("pic", user.getPhotoUrl() + "");
-                    Toast.makeText(getApplicationContext(), user.getDisplayName() + user.getUid(), Toast.LENGTH_SHORT).show();
                     finish();
                 }
             }
@@ -77,12 +78,15 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     private void createAccount(String email, String password) {
+        progressDialog.setMessage("SignUp...");
+        progressDialog.show();
+        progressDialog.setCanceledOnTouchOutside(false);
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            Toast.makeText(getApplicationContext(), "user registered successfully", Toast.LENGTH_SHORT).show();
+                            progressDialog.dismiss();
                             user = new UserModel();
                             user.setUid(mAuth.getCurrentUser().getUid());
                             user.setEmail(editEmail.getText().toString());
@@ -94,6 +98,7 @@ public class SignUpActivity extends AppCompatActivity {
                         }
                         // If sign in fails, display a message to the user. If sign in succeeds
                         if (!task.isSuccessful()) {
+                            progressDialog.dismiss();
                             Toast.makeText(SignUpActivity.this, "failed",
                                     Toast.LENGTH_SHORT).show();
                         }

@@ -1,5 +1,6 @@
 package com.mss.myfirebasedemo.activity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -35,6 +36,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
     @Bind(R.id.edit_new_pass)
     EditText editNewPass;
     private ViewGroup viewGroup;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -45,6 +47,8 @@ public class ChangePasswordActivity extends AppCompatActivity {
     }
 
     private void initUi() {
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setCanceledOnTouchOutside(false);
         viewGroup = (ViewGroup) ((ViewGroup) this.findViewById(android.R.id.content)).getChildAt(0);
         getSupportActionBar().setTitle("Change Password");
     }
@@ -67,6 +71,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
                                           @Override
                                           public void onComplete(@NonNull Task<Void> task) {
                                               if (task.isSuccessful()) {
+                                                  progressDialog.dismiss();
                                                   mAuth.signOut();
                                                   Intent loginIntent = new Intent(ChangePasswordActivity.this, LoginActivity.class);
                                                   loginIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -82,9 +87,11 @@ public class ChangePasswordActivity extends AppCompatActivity {
     @OnClick(R.id.btn_submit)
     public void onClick() {
         if (validations()) {
+            progressDialog.setMessage("Loading...");
+            progressDialog.setCanceledOnTouchOutside(false);
+            progressDialog.show();
             AuthCredential credential = EmailAuthProvider
                     .getCredential(mAuth.getCurrentUser().getEmail(), "123456");
-            // Prompt the user to re-provide their sign-in credentials
             mAuth.getCurrentUser().reauthenticate(credential)
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override

@@ -7,6 +7,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -88,13 +89,9 @@ public class ChatMessageActivity extends AppCompatActivity implements ClickListe
         initUi();
     }
 
+
+
     private void initUi() {
-        viewGroup = (ViewGroup) ((ViewGroup) this.findViewById(android.R.id.content)).getChildAt(0);
-        from = new FromModel();
-        to = new ToModel();
-        mLinearLayoutManager = new LinearLayoutManager(this);
-        mLinearLayoutManager.setStackFromEnd(true);
-        storage = FirebaseStorage.getInstance();
         user = (UserModel) getIntent().getSerializableExtra("update");
         chatKey = user.getUid() + "," + mAuth.getCurrentUser().getUid();
         tempKey = mAuth.getCurrentUser().getUid() + "," + user.getUid();
@@ -117,6 +114,13 @@ public class ChatMessageActivity extends AppCompatActivity implements ClickListe
 
             }
         });
+
+        viewGroup = (ViewGroup) ((ViewGroup) this.findViewById(android.R.id.content)).getChildAt(0);
+        from = new FromModel();
+        to = new ToModel();
+        mLinearLayoutManager = new LinearLayoutManager(this);
+        mLinearLayoutManager.setStackFromEnd(true);
+        storage = FirebaseStorage.getInstance();
         populateUi();
     }
 
@@ -138,12 +142,13 @@ public class ChatMessageActivity extends AppCompatActivity implements ClickListe
 
     private void sendMessage() {
         ChatModel model = new ChatModel(from, to, null, editTextMessage.getText().toString(), "");
-        database.child("Chat").child(key).push().setValue(model);
-        editTextMessage.setText("");
+        if (key != null) {
+            database.child("Chat").child(key).push().setValue(model);
+            editTextMessage.setText("");
+        }
     }
 
     private void getMessages() {
-        database = FirebaseDatabase.getInstance().getReference();
         final ChatFirebaseAdapter firebaseAdapter = new ChatFirebaseAdapter(database.child("Chat").child(key), mAuth.getCurrentUser().getEmail(), this);
         firebaseAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
@@ -275,10 +280,11 @@ public class ChatMessageActivity extends AppCompatActivity implements ClickListe
                     Uri downloadUrl = taskSnapshot.getDownloadUrl();
                     FileModel fileModel = new FileModel("img", downloadUrl.toString(), name, "");
                     ChatModel chatModel = new ChatModel(from, to, fileModel, "", Calendar.getInstance().getTime().getTime() + "");
-                    database.child("Chat").child(key).push().setValue(chatModel);
+                    if (key != null) {
+                        database.child("Chat").child(key).push().setValue(chatModel);
+                    }
                 }
             });
-        } else {
         }
     }
 
@@ -295,11 +301,11 @@ public class ChatMessageActivity extends AppCompatActivity implements ClickListe
                     Uri downloadUrl = taskSnapshot.getDownloadUrl();
                     FileModel fileModel = new FileModel("img", downloadUrl.toString(), file.getName(), file.length() + "");
                     ChatModel chatModel = new ChatModel(from, to, fileModel, "", Calendar.getInstance().getTime().getTime() + "");
-                    database.child("Chat").child(key).push().setValue(chatModel);
+                    if (key != null) {
+                        database.child("Chat").child(key).push().setValue(chatModel);
+                    }
                 }
             });
-        } else {
-
         }
     }
 
